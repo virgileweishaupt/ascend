@@ -70,9 +70,9 @@ function seed() {
     since: k,
     lastCheck: addDays(k, -1),
     pillars: [
-      { id: p1, name: 'Job corporate', icon: '💼', color: COLORS[0], rank: 0, goal: 150, archived: false },
-      { id: p2, name: 'Entrepreneuriat', icon: '🚀', color: COLORS[1], rank: 1, goal: 100, archived: false },
-      { id: p3, name: 'Social', icon: '🤝', color: COLORS[2], rank: 2, goal: 50, archived: false },
+      { id: p1, name: 'Job corporate', color: COLORS[0], rank: 0, goal: 150, archived: false },
+      { id: p2, name: 'Entrepreneuriat', color: COLORS[1], rank: 1, goal: 100, archived: false },
+      { id: p3, name: 'Social', color: COLORS[2], rank: 2, goal: 50, archived: false },
     ],
     tasks: [
       h('Bloc de deep work (90 min)', p1, 'hard', work),
@@ -88,10 +88,10 @@ function seed() {
     ],
     log: [],
     rewards: [
-      { id: uid(), name: 'Soirée série / jeu sans culpabilité', icon: '🎮', cost: 150 },
-      { id: uid(), name: 'Grasse matinée', icon: '😴', cost: 200 },
-      { id: uid(), name: 'Resto ou bar', icon: '🍽️', cost: 400 },
-      { id: uid(), name: 'Achat plaisir', icon: '🎁', cost: 800 },
+      { id: uid(), name: 'Soirée série / jeu sans culpabilité', cost: 150 },
+      { id: uid(), name: 'Grasse matinée', cost: 200 },
+      { id: uid(), name: 'Resto ou bar', cost: 400 },
+      { id: uid(), name: 'Achat plaisir', cost: 800 },
     ],
     purchases: [],
     jokers: {},
@@ -127,7 +127,7 @@ function save() {
     localStorage.setItem(KEY, JSON.stringify(S));
   } catch (e) {
     console.error('Sauvegarde impossible', e);
-    toast('⚠️ Sauvegarde impossible (stockage plein ?)');
+    toast('Sauvegarde impossible (stockage plein ?)');
   }
 }
 function commit() {
@@ -282,12 +282,12 @@ function completeTask(t, ev) {
   if (lvAfter > lvBefore) celebrate({ kicker: 'Niveau supérieur', num: lvAfter, text: 'Tu montes en puissance. Continue.' });
   if (pillar) {
     const pLvAfter = pillarLevel(pillar.id).level;
-    if (pLvAfter > pLvBefore && lvAfter === lvBefore) toast(`${pillar.icon} ${pillar.name} passe niveau ${pLvAfter} !`);
+    if (pLvAfter > pLvBefore && lvAfter === lvBefore) toast(`${pillar.name} passe niveau ${pLvAfter} !`);
     if (!ringBefore && dayPillarXP(td, pillar.id) >= pillar.goal) {
       if (!allBefore && ringsClosed(td)) {
-        celebrate({ kicker: 'Journée parfaite', num: '🎯', small: true, text: `Tous tes anneaux sont fermés · série de ${ringStreak()} j` });
+        celebrate({ kicker: 'Journée parfaite', num: `${activePillars().length}/${activePillars().length}`, small: true, text: `Tous tes anneaux sont fermés · série de ${ringStreak()} j` });
       } else {
-        toast(`${pillar.icon} Anneau ${pillar.name} fermé !`);
+        toast(`Anneau ${pillar.name} fermé !`);
       }
     }
   }
@@ -437,7 +437,7 @@ function viewToday() {
     <button class="link" data-act="toggle-edit">${ui.edit ? 'Terminé' : 'Modifier'}</button></div>`;
 
   for (const { p, tasks } of groups) {
-    h += `<div class="sec-head"><span class="dot" style="background:${p.color}"></span><h2>${p.icon} ${esc(p.name)}</h2>
+    h += `<div class="sec-head"><span class="dot" style="background:${p.color}"></span><h2>${esc(p.name)}</h2>
       <span class="mult" style="background:${p.color};color:#0b0b0f">${fmtMult(RANK_MULT[p.rank])}</span></div>
       <div class="list">${tasks.map((t) => taskRow(t, td)).join('') || '<div class="empty">Rien de prévu ici. Ajoute une action avec +</div>'}</div>`;
   }
@@ -464,7 +464,6 @@ function viewShop() {
       .map((r) => {
         const ok = g >= r.cost;
         return `<div class="reward">
-          <button class="emoji" data-act="edit-reward" data-id="${r.id}" aria-label="Modifier">${esc(r.icon || '🎁')}</button>
           <button class="r-body" data-act="edit-reward" data-id="${r.id}">
             <div class="r-name">${esc(r.name)}</div>
             ${ok ? '<div class="r-sub">Disponible ✓</div>' : `${bar('rw-' + r.id, g / r.cost)}<div class="r-sub">Encore ${fmt(r.cost - g)} or</div>`}
@@ -481,7 +480,7 @@ function viewShop() {
       .slice(0, 20)
       .map(
         (p) =>
-          `<div class="hist"><span>${esc(p.icon || '🎁')} ${esc(p.name)}</span><span>−${fmt(p.cost)} · ${new Date(p.ts).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span></div>`
+          `<div class="hist"><span>${esc(p.name)}</span><span>−${fmt(p.cost)} · ${new Date(p.ts).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span></div>`
       )
       .join('')}</div>`;
   }
@@ -501,7 +500,6 @@ function viewProfile() {
   ps.forEach((p, i) => {
     const pl = pillarLevel(p.id);
     h += `<div class="tier" style="width:${widths[i + (3 - ps.length)] || '100%'};background:${p.color}" data-act="edit-pillar" data-id="${p.id}">
-      <span class="ico">${esc(p.icon)}</span>
       <div class="body"><div class="name">${esc(p.name)}</div>
         <div class="meta">Niv. ${pl.level} · ${fmt(pillarXP(p.id))} XP</div>${bar('pl-' + p.id, pl.pct)}</div>
       <span class="x">${fmtMult(RANK_MULT[p.rank])}</span>
@@ -510,7 +508,7 @@ function viewProfile() {
         <button data-act="pillar-down" data-id="${p.id}" ${i === ps.length - 1 ? 'disabled' : ''} aria-label="Descendre">▼</button>
       </div></div>`;
   });
-  h += `<div class="tier off" style="width:100%"><span class="ico">🌍</span>
+  h += `<div class="tier off" style="width:100%">
       <div class="body"><div class="name">Hors pilier</div><div class="meta">${fmt(pillarXP(''))} XP · le reste de ta vie</div></div>
       <span class="x">${fmtMult(OFF_MULT)}</span></div></div>`;
   h += `<p class="hint" style="margin:-4px 8px 14px;text-align:center">Plus un pilier est haut, plus ses actions rapportent. Touche un pilier pour le modifier, ▲▼ pour changer les priorités.</p>`;
@@ -529,7 +527,7 @@ function viewProfile() {
   if (archived.length) {
     h += `<div class="sec-head"><h2>Piliers archivés</h2></div><div class="list">${archived
       .map(
-        (p) => `<div class="setting"><span>${esc(p.icon)} ${esc(p.name)}<small>Niv. ${pillarLevel(p.id).level} · ${fmt(pillarXP(p.id))} XP</small></span>
+        (p) => `<div class="setting"><span>${esc(p.name)}<small>Niv. ${pillarLevel(p.id).level} · ${fmt(pillarXP(p.id))} XP</small></span>
           ${ps.length < MAX_PILLARS ? `<button class="link" data-act="restore-pillar" data-id="${p.id}">Réactiver</button>` : ''}</div>`
       )
       .join('')}</div>`;
@@ -642,12 +640,10 @@ function taskSheet(t) {
 function pillarSheet(p) {
   const isNew = !p;
   const used = activePillars().map((x) => x.color);
-  p = p || { name: '', icon: '⭐', color: COLORS.find((c) => !used.includes(c)) || COLORS[0], goal: 100 };
+  p = p || { name: '', color: COLORS.find((c) => !used.includes(c)) || COLORS[0], goal: 100 };
   const body = `
     <div class="field"><label for="f-name">Nom du pilier</label>
       <input class="input" id="f-name" name="name" value="${esc(p.name)}" placeholder="Ex. Santé" autocomplete="off" maxlength="30"></div>
-    <div class="field"><label for="f-icon">Emoji</label>
-      <input class="input" id="f-icon" name="icon" value="${esc(p.icon)}" autocomplete="off" maxlength="8" style="width:90px;text-align:center;font-size:22px"></div>
     <div class="field"><div class="lab">Couleur</div><div class="choices colors">
       ${COLORS.map((c) => radio('color', c, '', p.color === c, `--c:${c}`)).join('')}</div></div>
     <div class="field"><div class="lab">Objectif quotidien (XP pour fermer l'anneau)</div><div class="seg">
@@ -663,7 +659,7 @@ function pillarSheet(p) {
       $('#f-name').focus();
       return;
     }
-    const data = { name, icon: String(fd.get('icon') || '').trim() || '⭐', color: fd.get('color') || p.color, goal: Number(fd.get('goal')) || 100 };
+    const data = { name, color: fd.get('color') || p.color, goal: Number(fd.get('goal')) || 100 };
     if (isNew) {
       if (activePillars().length >= MAX_PILLARS) return;
       S.pillars.push({ id: uid(), rank: activePillars().length, archived: false, ...data });
@@ -677,16 +673,12 @@ function pillarSheet(p) {
 
 function rewardSheet(r) {
   const isNew = !r;
-  r = r || { name: '', icon: '🎁', cost: 200 };
+  r = r || { name: '', cost: 200 };
   const body = `
     <div class="field"><label for="f-name">Récompense</label>
       <input class="input" id="f-name" name="name" value="${esc(r.name)}" placeholder="Ex. Ciné" autocomplete="off" maxlength="50"></div>
-    <div style="display:flex;gap:12px">
-      <div class="field"><label for="f-icon">Emoji</label>
-        <input class="input" id="f-icon" name="icon" value="${esc(r.icon)}" autocomplete="off" maxlength="8" style="width:90px;text-align:center;font-size:22px"></div>
-      <div class="field" style="flex:1"><label for="f-cost">Prix en or</label>
+    <div class="field"><label for="f-cost">Prix en or</label>
         <input class="input" id="f-cost" name="cost" type="number" inputmode="numeric" min="1" step="10" value="${r.cost}"></div>
-    </div>
     <p class="hint" style="margin:-6px 4px 16px">Repère : une bonne journée rapporte environ 100 à 150 or.</p>
     <div class="actions">
       <button class="btn" type="submit">${isNew ? 'Ajouter' : 'Enregistrer'}</button>
@@ -699,7 +691,7 @@ function rewardSheet(r) {
       $('#f-name').focus();
       return;
     }
-    const data = { name, icon: String(fd.get('icon') || '').trim() || '🎁', cost };
+    const data = { name, cost };
     if (isNew) S.rewards.push({ id: uid(), ...data });
     else Object.assign(S.rewards.find((x) => x.id === r.id), data);
     closeSheet();
@@ -710,17 +702,17 @@ function rewardSheet(r) {
 function buySheet(r) {
   const g = gold();
   openSheet(
-    `${esc(r.icon || '🎁')} ${esc(r.name)}`,
+    esc(r.name),
     `<p class="hint" style="font-size:15px;margin:-6px 0 18px">Dépenser <b>${fmt(r.cost)} or</b> ? Il te restera ${fmt(g - r.cost)} or.</p>
      <div class="actions"><button class="btn" type="submit">Je me l'offre</button>
      <button class="btn ghost" type="button" data-act="close-sheet-btn">Pas maintenant</button></div>`,
     () => {
       if (gold() < r.cost) return;
-      const p = { id: uid(), rewardId: r.id, name: r.name, icon: r.icon, cost: r.cost, ts: Date.now() };
+      const p = { id: uid(), rewardId: r.id, name: r.name, cost: r.cost, ts: Date.now() };
       S.purchases.push(p);
       closeSheet();
       commit();
-      toast(`${r.icon || '🎁'} Profite bien, tu l'as mérité`, {
+      toast("Profite bien, tu l'as mérité", {
         label: 'Annuler',
         fn: () => {
           S.purchases = S.purchases.filter((x) => x.id !== p.id);
@@ -827,7 +819,7 @@ function importData(file) {
       render();
       toast('Sauvegarde importée');
     } catch (e) {
-      toast("⚠️ Ce fichier n'est pas une sauvegarde valide");
+      toast("Ce fichier n'est pas une sauvegarde valide");
     }
   };
   reader.readAsText(file);

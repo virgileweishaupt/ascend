@@ -540,7 +540,7 @@ select {
   content: '';
   position: absolute;
   top: 0;
-  left: 66px;
+  left: 14px;
   right: 0;
   height: 1px;
   background: var(--line);
